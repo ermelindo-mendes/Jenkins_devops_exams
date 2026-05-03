@@ -20,9 +20,9 @@ pipeline {
         stage('Build Images') {
             steps {
                 script {
-                    sh "docker compose  build movie_service cast_service"
-                    sh "docker tag app_movie_service:latest ${DOCKER_USER}/movie-service:${IMAGE_TAG}"
-                    sh "docker tag app_cast_service:latest ${DOCKER_USER}/cast-service:${IMAGE_TAG}"
+                    sh "docker compose build movie_service cast_service"
+                    sh "docker tag app-movie_service:latest ${DOCKER_USER}/movie-service:${IMAGE_TAG}"
+                    sh "docker tag app-cast_service:latest ${DOCKER_USER}/cast-service:${IMAGE_TAG}"
                 }
             }
         }
