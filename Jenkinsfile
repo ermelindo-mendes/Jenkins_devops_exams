@@ -3,10 +3,8 @@ pipeline {
 
     environment {
         DOCKER_USER = 'ermel78'
-        
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
-        KUBECONFIG = '/home/ubuntu/.kube/config'
         COMPOSE_PROJECT_NAME = 'app' 
     }
 
@@ -41,8 +39,10 @@ pipeline {
 
         stage('Deploy to DEV') {
             steps {
-                sh "helm upgrade --install movie-service ./charts --namespace dev --set image.repository=${DOCKER_USER}/movie-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=movie-service"
-                sh "helm upgrade --install cast-service ./charts --namespace dev --set image.repository=${DOCKER_USER}/cast-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=cast-service"
+                withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
+                    sh "helm upgrade --install movie-service ./charts --namespace dev --set image.repository=${DOCKER_USER}/movie-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=movie-service"
+                    sh "helm upgrade --install cast-service ./charts --namespace dev --set image.repository=${DOCKER_USER}/cast-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=cast-service"
+                }
             }
         }
 
@@ -50,14 +50,18 @@ pipeline {
             parallel {
                 stage('QA') {
                     steps {
-                        sh "helm upgrade --install movie-service ./charts --namespace qa --set image.repository=${DOCKER_USER}/movie-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=movie-service"
-                        sh "helm upgrade --install cast-service ./charts --namespace qa --set image.repository=${DOCKER_USER}/cast-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=cast-service"
+                        withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
+                            sh "helm upgrade --install movie-service ./charts --namespace qa --set image.repository=${DOCKER_USER}/movie-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=movie-service"
+                            sh "helm upgrade --install cast-service ./charts --namespace qa --set image.repository=${DOCKER_USER}/cast-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=cast-service"
+                        }
                     }
                 }
                 stage('Staging') {
                     steps {
-                        sh "helm upgrade --install movie-service ./charts --namespace staging --set image.repository=${DOCKER_USER}/movie-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=movie-service"
-                        sh "helm upgrade --install cast-service ./charts --namespace staging --set image.repository=${DOCKER_USER}/cast-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=cast-service"
+                        withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
+                            sh "helm upgrade --install movie-service ./charts --namespace staging --set image.repository=${DOCKER_USER}/movie-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=movie-service"
+                            sh "helm upgrade --install cast-service ./charts --namespace staging --set image.repository=${DOCKER_USER}/cast-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=cast-service"
+                        }
                     }
                 }
             }
@@ -70,8 +74,10 @@ pipeline {
             steps {
                 input message: "Voulez-vous déployer en PRODUCTION ?", ok: "Oui, déployer !"
                 
-                sh "helm upgrade --install movie-service ./charts --namespace prod --set image.repository=${DOCKER_USER}/movie-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=movie-service"
-                sh "helm upgrade --install cast-service ./charts --namespace prod --set image.repository=${DOCKER_USER}/cast-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=cast-service"
+                withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
+                    sh "helm upgrade --install movie-service ./charts --namespace prod --set image.repository=${DOCKER_USER}/movie-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=movie-service"
+                    sh "helm upgrade --install cast-service ./charts --namespace prod --set image.repository=${DOCKER_USER}/cast-service --set image.tag=${IMAGE_TAG} --set fullnameOverride=cast-service"
+                }
             }
         }
     }
