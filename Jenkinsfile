@@ -69,7 +69,10 @@ pipeline {
 
         stage('Deploy to PROD') {
             when {
-                branch 'master' 
+                anyOf {
+                    branch 'master'
+                    environment name: 'GIT_BRANCH', value: 'origin/master'
+                }
             }
             steps {
                 input message: "Voulez-vous déployer en PRODUCTION ?", ok: "Oui, déployer !"
